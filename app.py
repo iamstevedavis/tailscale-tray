@@ -5,6 +5,7 @@ from PySide6.QtCore import QProcess, QTimer, QUrl
 from PySide6.QtGui import QAction, QClipboard, QDesktopServices, QIcon
 from PySide6.QtWidgets import QApplication, QMenu, QMessageBox, QStyle, QSystemTrayIcon
 
+from diagnostics_view import build_diagnostics_view
 from tailscale_cli import detect_tailscale_path, missing_tailscale_message
 from tailscale_status import ConnectionState, TailscaleSnapshot
 from tray_controller import TrayController, TrayMessage
@@ -111,6 +112,9 @@ class TailscaleTray:
             lambda: QDesktopServices.openUrl(QUrl(TAILSCALE_ADMIN_URL))
         )
 
+        self.show_diagnostics_action = QAction("Show diagnostics", self.menu)
+        self.show_diagnostics_action.triggered.connect(self.show_diagnostics)
+
         self.quit_action = QAction("Quit", self.menu)
         self.quit_action.triggered.connect(self.app.quit)
 
@@ -122,6 +126,7 @@ class TailscaleTray:
         self.menu.addAction(self.disconnect_action)
         self.menu.addAction(self.copy_ip_action)
         self.menu.addAction(self.open_admin_action)
+        self.menu.addAction(self.show_diagnostics_action)
         self.menu.addSeparator()
         self.menu.addAction(self.quit_action)
 
@@ -168,6 +173,10 @@ class TailscaleTray:
         clipboard = QApplication.clipboard()
         clipboard.setText(self.snapshot.tailnet_ip, mode=QClipboard.Mode.Clipboard)
         self.show_message("Copy Tailnet IP", f"Copied {self.snapshot.tailnet_ip}")
+
+    def show_diagnostics(self) -> None:
+        diagnostics = build_diagnostics_view(self.snapshot, self.resolve_tailscale_path())
+        QMessageBox.information(None, diagnostics.title, diagnostics.message)
 
     def show_message(
         self,
