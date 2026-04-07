@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Tailscale Tray
+Comment=Small KDE tray helper for Tailscale
+Exec=python3 /path/to/tailscale-tray/app.py
+Icon=network-vpn
+Terminal=false
+Categories=Network;Utility;
+StartupNotify=false
+X-GNOME-UsesNotifications=true
