@@ -85,14 +85,17 @@ def _is_permission_problem(lower: str) -> bool:
 
 
 def _is_tailscaled_down(lower: str) -> bool:
-    needles = (
-        "failed to connect to local tailscaled",
-        "tailscaled.sock",
-        "no such file or directory",
-        "cannot connect to local tailscaled",
-        "tailscaled is not running",
-    )
-    return any(needle in lower for needle in needles)
+    if any(
+        needle in lower
+        for needle in (
+            "failed to connect to local tailscaled",
+            "cannot connect to local tailscaled",
+            "tailscaled is not running",
+        )
+    ):
+        return True
+
+    return "tailscaled.sock" in lower and "no such file or directory" in lower
 
 
 def _extract_auth_url(text: str) -> str | None:

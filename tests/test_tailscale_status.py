@@ -99,6 +99,17 @@ class TailscaleStatusTests(unittest.TestCase):
 
         self.assertIn("tailscaled", feedback.title.lower())
 
+    def test_command_feedback_does_not_treat_generic_enoent_as_tailscaled_down(self):
+        feedback = analyze_tailscale_command(
+            "Connect",
+            exit_code=1,
+            stdout="",
+            stderr="open /tmp/missing-config.json: no such file or directory",
+        )
+
+        self.assertEqual("Connect", feedback.title)
+        self.assertEqual("critical", feedback.icon)
+
     def test_command_feedback_detects_browser_login_requirement(self):
         feedback = analyze_tailscale_command(
             "Connect",
