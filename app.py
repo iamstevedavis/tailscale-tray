@@ -10,12 +10,21 @@ from PySide6.QtWidgets import QApplication, QMenu, QMessageBox, QStyle, QSystemT
 from tailscale_cli import detect_tailscale_path, missing_tailscale_message
 from tailscale_command import analyze_tailscale_command
 from tailscale_status import ConnectionState, TailscaleSnapshot, error_snapshot, parse_status_payload
+from tray_view import build_tray_view
 
 
 MESSAGE_ICONS = {
     "info": QSystemTrayIcon.MessageIcon.Information,
     "warning": QSystemTrayIcon.MessageIcon.Warning,
     "critical": QSystemTrayIcon.MessageIcon.Critical,
+}
+
+TRAY_ICONS = {
+    "connected": QStyle.StandardPixmap.SP_DialogApplyButton,
+    "connecting": QStyle.StandardPixmap.SP_BrowserReload,
+    "warning": QStyle.StandardPixmap.SP_MessageBoxWarning,
+    "critical": QStyle.StandardPixmap.SP_MessageBoxCritical,
+    "stopped": QStyle.StandardPixmap.SP_DialogCancelButton,
 }
 
 POLL_INTERVAL_MS = 10000
@@ -25,7 +34,7 @@ TAILSCALE_ADMIN_URL = "https://login.tailscale.com/admin/machines"
 class TailscaleTray:
     def __init__(self, app: QApplication) -> None:
         self.app = app
-        self.tray = QSystemTrayIcon(self._icon_for_state(ConnectionState.STOPPED), app)
+        self.tray = QSystemTrayIcon(self._icon_for_key("stopped"), app)
         self.tray.setToolTip("Tailscale Tray")
         self.menu = QMenu()
         self.tray.setContextMenu(self.menu)
@@ -98,17 +107,8 @@ class TailscaleTray:
         if reason == QSystemTrayIcon.ActivationReason.Trigger:
             self.refresh_status()
 
-    def _icon_for_state(self, state: ConnectionState) -> QIcon:
-        style = self.app.style()
-        if state == ConnectionState.CONNECTED:
-            return style.standardIcon(QStyle.StandardPixmap.SP_DialogApplyButton)
-        if state == ConnectionState.CONNECTING:
-            return style.standardIcon(QStyle.StandardPixmap.SP_BrowserReload)
-        if state in {ConnectionState.NEEDS_LOGIN, ConnectionState.NEEDS_APPROVAL, ConnectionState.UNKNOWN}:
-            return style.standardIcon(QStyle.StandardPixmap.SP_MessageBoxWarning)
-        if state == ConnectionState.ERROR:
-            return style.standardIcon(QStyle.StandardPixmap.SP_MessageBoxCritical)
-        return style.standardIcon(QStyle.StandardPixmap.SP_DialogCancelButton)
+    def _icon_for_key(self, icon_key: str) -> QIcon:
+        return self.app.style().standardIcon(TRAY_ICONS[icon_key])
 
     def resolve_tailscale_path(self) -> str | None:
         self.tailscale_path = detect_tailscale_path()
@@ -183,29 +183,14 @@ class TailscaleTray:
 
     def apply_snapshot(self) -> None:
         snapshot = self.snapshot
-        self.tray.setIcon(self._icon_for_state(snapshot.state))
-        self.status_action.setText(f"Status: {snapshot.state.value}")
-        self.details_action.setText(f"Details: {snapshot.summary}")
-
-        tooltip_lines = [f"Tailscale: {snapshot.state.value}", f"Backend: {snapshot.backend_state or 'Unknown'}"]
-        if snapshot.tailnet_name:
-            tooltip_lines.append(snapshot.tailnet_name)
-        if snapshot.tailnet_ip:
-            tooltip_lines.append(snapshot.tailnet_ip)
-        if snapshot.error:
-            tooltip_lines.append(snapshot.error)
-        self.tray.setToolTip("\n".join(tooltip_lines))
-
-        self.copy_ip_action.setEnabled(bool(snapshot.tailnet_ip))
-        self.connect_action.setEnabled(
-            snapshot.state in {
-                ConnectionState.STOPPED,
-                ConnectionState.NEEDS_LOGIN,
-                ConnectionState.NEEDS_APPROVAL,
-                ConnectionState.UNKNOWN,
-            }
-        )
-        self.disconnect_action.setEnabled(snapshot.state in {ConnectionState.CONNECTED, ConnectionState.CONNECTING})
+        view = build_tray_view(snapshot)
+        self.tray.setIcon(self._icon_for_key(view.icon))
+        self.status_action.setText(view.status_text)
+        self.details_action.setText(view.details_text)
+        self.tray.setToolTip(view.tooltip)
+        self.copy_ip_action.setEnabled(view.copy_ip_enabled)
+        self.connect_action.setEnabled(view.connect_enabled)
+        self.disconnect_action.setEnabled(view.disconnect_enabled)
 
     def run_tailscale_command(self, args: list[str], action_name: str) -> None:
         tailscale_path = self.resolve_tailscale_path()
