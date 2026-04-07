@@ -18,13 +18,13 @@ TAILSCALE_ADMIN_URL = "https://login.tailscale.com/admin/machines"
 class TailscaleTray:
     def __init__(self, app: QApplication) -> None:
         self.app = app
-        self.tray = QSystemTrayIcon(self._icon_for_state(ConnectionState.DISCONNECTED), app)
+        self.tray = QSystemTrayIcon(self._icon_for_state(ConnectionState.STOPPED), app)
         self.tray.setToolTip("Tailscale Tray")
         self.menu = QMenu()
         self.tray.setContextMenu(self.menu)
 
         self.snapshot = TailscaleSnapshot(
-            state=ConnectionState.DISCONNECTED,
+            state=ConnectionState.STOPPED,
             backend_state="Unknown",
             tailnet_ip="",
             tailnet_name="",
@@ -95,7 +95,9 @@ class TailscaleTray:
         style = self.app.style()
         if state == ConnectionState.CONNECTED:
             return style.standardIcon(QStyle.StandardPixmap.SP_DialogApplyButton)
-        if state == ConnectionState.NEEDS_LOGIN:
+        if state == ConnectionState.CONNECTING:
+            return style.standardIcon(QStyle.StandardPixmap.SP_BrowserReload)
+        if state in {ConnectionState.NEEDS_LOGIN, ConnectionState.NEEDS_APPROVAL, ConnectionState.UNKNOWN}:
             return style.standardIcon(QStyle.StandardPixmap.SP_MessageBoxWarning)
         if state == ConnectionState.ERROR:
             return style.standardIcon(QStyle.StandardPixmap.SP_MessageBoxCritical)
@@ -174,7 +176,7 @@ class TailscaleTray:
         self.status_action.setText(f"Status: {snapshot.state.value}")
         self.details_action.setText(f"Details: {snapshot.summary}")
 
-        tooltip_lines = [f"Tailscale: {snapshot.state.value}"]
+        tooltip_lines = [f"Tailscale: {snapshot.state.value}", f"Backend: {snapshot.backend_state or 'Unknown'}"]
         if snapshot.tailnet_name:
             tooltip_lines.append(snapshot.tailnet_name)
         if snapshot.tailnet_ip:
@@ -184,8 +186,15 @@ class TailscaleTray:
         self.tray.setToolTip("\n".join(tooltip_lines))
 
         self.copy_ip_action.setEnabled(bool(snapshot.tailnet_ip))
-        self.connect_action.setEnabled(snapshot.state in {ConnectionState.DISCONNECTED, ConnectionState.NEEDS_LOGIN})
-        self.disconnect_action.setEnabled(snapshot.state == ConnectionState.CONNECTED)
+        self.connect_action.setEnabled(
+            snapshot.state in {
+                ConnectionState.STOPPED,
+                ConnectionState.NEEDS_LOGIN,
+                ConnectionState.NEEDS_APPROVAL,
+                ConnectionState.UNKNOWN,
+            }
+        )
+        self.disconnect_action.setEnabled(snapshot.state in {ConnectionState.CONNECTED, ConnectionState.CONNECTING})
 
     def run_tailscale_command(self, args: list[str], action_name: str) -> None:
         if not self.tailscale_path:

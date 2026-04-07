@@ -32,7 +32,30 @@ class TailscaleStatusTests(unittest.TestCase):
         snapshot = parse_status_payload(payload)
 
         self.assertEqual(snapshot.state, ConnectionState.NEEDS_LOGIN)
-        self.assertEqual(snapshot.summary, "NeedsLogin")
+        self.assertEqual(snapshot.summary, "backend: NeedsLogin")
+
+    def test_starting_payload_maps_to_connecting(self):
+        payload = {"BackendState": "Starting", "Self": {"HostName": "fedora-laptop"}}
+
+        snapshot = parse_status_payload(payload)
+
+        self.assertEqual(snapshot.state, ConnectionState.CONNECTING)
+        self.assertIn("backend: Starting", snapshot.summary)
+
+    def test_machine_auth_payload_maps_to_needs_approval(self):
+        payload = {"BackendState": "NeedsMachineAuth", "Self": {}}
+
+        snapshot = parse_status_payload(payload)
+
+        self.assertEqual(snapshot.state, ConnectionState.NEEDS_APPROVAL)
+
+    def test_unknown_backend_state_is_not_treated_as_error(self):
+        payload = {"BackendState": "WeirdFutureState", "Self": {}}
+
+        snapshot = parse_status_payload(payload)
+
+        self.assertEqual(snapshot.state, ConnectionState.UNKNOWN)
+        self.assertEqual(snapshot.error, "")
 
     def test_error_snapshot_sets_error_state(self):
         snapshot = error_snapshot("command failed", "boom")

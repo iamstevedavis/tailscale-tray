@@ -4,8 +4,11 @@ from enum import Enum
 
 class ConnectionState(str, Enum):
     CONNECTED = "Connected"
-    DISCONNECTED = "Disconnected"
+    CONNECTING = "Connecting"
+    STOPPED = "Stopped"
     NEEDS_LOGIN = "Needs Login"
+    NEEDS_APPROVAL = "Needs Approval"
+    UNKNOWN = "Unknown"
     ERROR = "Error"
 
 
@@ -28,7 +31,9 @@ class TailscaleSnapshot:
             details.append(self.tailnet_ip)
         if self.exit_node:
             details.append(f"exit: {self.exit_node}")
-        return " • ".join(details) or self.backend_state or self.state.value
+        if self.backend_state:
+            details.append(f"backend: {self.backend_state}")
+        return " • ".join(details) or self.state.value
 
 
 def error_snapshot(backend_state: str, message: str) -> TailscaleSnapshot:
@@ -54,12 +59,13 @@ def parse_status_payload(payload: dict) -> TailscaleSnapshot:
 
     state_map = {
         "Running": ConnectionState.CONNECTED,
-        "Starting": ConnectionState.CONNECTED,
-        "Stopped": ConnectionState.DISCONNECTED,
+        "Starting": ConnectionState.CONNECTING,
+        "Stopped": ConnectionState.STOPPED,
         "NeedsLogin": ConnectionState.NEEDS_LOGIN,
-        "NoState": ConnectionState.DISCONNECTED,
+        "NeedsMachineAuth": ConnectionState.NEEDS_APPROVAL,
+        "NoState": ConnectionState.STOPPED,
     }
-    state = state_map.get(backend_state, ConnectionState.ERROR)
+    state = state_map.get(backend_state, ConnectionState.UNKNOWN)
 
     return TailscaleSnapshot(
         state=state,
