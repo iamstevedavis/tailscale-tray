@@ -4,6 +4,7 @@ import tempfile
 import unittest
 
 from tailscale_cli import detect_tailscale_path, missing_tailscale_message
+from tailscale_command import analyze_tailscale_command
 from tailscale_status import ConnectionState, error_snapshot, parse_status_payload
 
 
@@ -76,6 +77,37 @@ class TailscaleStatusTests(unittest.TestCase):
 
     def test_missing_tailscale_message_mentions_snap(self):
         self.assertIn("Snap installs are supported", missing_tailscale_message())
+
+    def test_command_feedback_detects_permission_problem(self):
+        feedback = analyze_tailscale_command(
+            "Connect",
+            exit_code=1,
+            stdout="",
+            stderr="permission denied while talking to local tailscaled",
+        )
+
+        self.assertIn("permission", feedback.title.lower())
+
+    def test_command_feedback_detects_tailscaled_not_running(self):
+        feedback = analyze_tailscale_command(
+            "Connect",
+            exit_code=1,
+            stdout="",
+            stderr="failed to connect to local tailscaled; no such file or directory",
+        )
+
+        self.assertIn("tailscaled", feedback.title.lower())
+
+    def test_command_feedback_detects_browser_login_requirement(self):
+        feedback = analyze_tailscale_command(
+            "Connect",
+            exit_code=1,
+            stdout="To authenticate, visit: https://login.tailscale.com/a/abc123",
+            stderr="",
+        )
+
+        self.assertIn("browser login", feedback.title.lower())
+        self.assertIn("https://login.tailscale.com/a/abc123", feedback.message)
 
 
 if __name__ == "__main__":

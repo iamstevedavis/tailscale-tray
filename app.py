@@ -8,8 +8,15 @@ from PySide6.QtGui import QAction, QClipboard, QDesktopServices, QIcon
 from PySide6.QtWidgets import QApplication, QMenu, QMessageBox, QStyle, QSystemTrayIcon
 
 from tailscale_cli import detect_tailscale_path, missing_tailscale_message
+from tailscale_command import analyze_tailscale_command
 from tailscale_status import ConnectionState, TailscaleSnapshot, error_snapshot, parse_status_payload
 
+
+MESSAGE_ICONS = {
+    "info": QSystemTrayIcon.MessageIcon.Information,
+    "warning": QSystemTrayIcon.MessageIcon.Warning,
+    "critical": QSystemTrayIcon.MessageIcon.Critical,
+}
 
 POLL_INTERVAL_MS = 10000
 TAILSCALE_ADMIN_URL = "https://login.tailscale.com/admin/machines"
@@ -221,20 +228,22 @@ class TailscaleTray:
     def _command_finished(self, process: QProcess, exit_code: int, _exit_status: QProcess.ExitStatus, action_name: str) -> None:
         stdout = bytes(process.readAllStandardOutput()).decode().strip()
         stderr = bytes(process.readAllStandardError()).decode().strip()
-        if exit_code == 0:
-            detail = stdout or f"{action_name} succeeded."
-            self.show_message(action_name, detail)
-        else:
-            detail = stderr or stdout or f"{action_name} failed with exit code {exit_code}."
-            self.show_message(action_name, detail, QSystemTrayIcon.MessageIcon.Critical)
+        feedback = analyze_tailscale_command(action_name, exit_code=exit_code, stdout=stdout, stderr=stderr)
+        self.show_message(feedback.title, feedback.message, MESSAGE_ICONS[feedback.icon])
         self.refresh_status()
         process.deleteLater()
         self.command_process = None
 
     def _command_failed(self, process: QProcess, action_name: str) -> None:
         self.resolve_tailscale_path()
-        detail = process.errorString() or f"{action_name} failed to start."
-        self.show_message(action_name, detail, QSystemTrayIcon.MessageIcon.Critical)
+        feedback = analyze_tailscale_command(
+            action_name,
+            exit_code=None,
+            stdout="",
+            stderr="",
+            process_error=process.errorString(),
+        )
+        self.show_message(feedback.title, feedback.message, MESSAGE_ICONS[feedback.icon])
         process.deleteLater()
         self.command_process = None
         self.refresh_status()
