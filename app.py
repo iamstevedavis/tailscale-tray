@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import json
-import subprocess
 import sys
 from typing import Optional
 
@@ -34,6 +33,8 @@ class TailscaleTray:
             error="",
         )
         self.command_process: Optional[QProcess] = None
+        self.status_process: Optional[QProcess] = None
+        self.pending_refresh = False
         self.tailscale_path = detect_tailscale_path()
 
         self._build_menu()
@@ -101,7 +102,29 @@ class TailscaleTray:
         return style.standardIcon(QStyle.StandardPixmap.SP_DialogCancelButton)
 
     def refresh_status(self, initial: bool = False) -> None:
-        snapshot = self.fetch_status()
+        if self.status_process and self.status_process.state() != QProcess.ProcessState.NotRunning:
+            self.pending_refresh = True
+            return
+
+        self.tailscale_path = detect_tailscale_path()
+        if not self.tailscale_path:
+            self._apply_status_snapshot(
+                error_snapshot("tailscale not found", missing_tailscale_message()),
+                initial=initial,
+            )
+            return
+
+        process = QProcess(self.app)
+        process.setProgram(self.tailscale_path)
+        process.setArguments(["status", "--json"])
+        process.finished.connect(
+            lambda code, status: self._status_finished(process, code, status, initial)
+        )
+        process.errorOccurred.connect(lambda _err: self._status_failed(process, initial))
+        self.status_process = process
+        process.start()
+
+    def _apply_status_snapshot(self, snapshot: TailscaleSnapshot, initial: bool = False) -> None:
         previous_state = self.snapshot.state
         self.snapshot = snapshot
         self.apply_snapshot()
@@ -109,26 +132,41 @@ class TailscaleTray:
         if not initial and snapshot.state != previous_state:
             self.show_message("Tailscale status changed", f"{snapshot.state.value}: {snapshot.summary}")
 
-    def fetch_status(self) -> TailscaleSnapshot:
-        if not self.tailscale_path:
-            return error_snapshot("tailscale not found", missing_tailscale_message())
+    def _status_finished(
+        self,
+        process: QProcess,
+        exit_code: int,
+        _exit_status: QProcess.ExitStatus,
+        initial: bool,
+    ) -> None:
+        stdout = bytes(process.readAllStandardOutput()).decode().strip()
+        stderr = bytes(process.readAllStandardError()).decode().strip()
 
-        try:
-            result = subprocess.run(
-                [self.tailscale_path, "status", "--json"],
-                capture_output=True,
-                text=True,
-                timeout=5,
-                check=True,
-            )
-            payload = json.loads(result.stdout)
-        except subprocess.CalledProcessError as exc:
-            error = (exc.stderr or exc.stdout or str(exc)).strip()
-            return error_snapshot("command failed", error)
-        except (json.JSONDecodeError, subprocess.TimeoutExpired) as exc:
-            return error_snapshot("invalid status output", str(exc))
+        if exit_code == 0:
+            try:
+                snapshot = parse_status_payload(json.loads(stdout))
+            except json.JSONDecodeError as exc:
+                snapshot = error_snapshot("invalid status output", str(exc))
+        else:
+            detail = stderr or stdout or f"status failed with exit code {exit_code}."
+            snapshot = error_snapshot("command failed", detail)
 
-        return parse_status_payload(payload)
+        self._apply_status_snapshot(snapshot, initial=initial)
+        self._finish_status_process(process)
+
+    def _status_failed(self, process: QProcess, initial: bool) -> None:
+        snapshot = error_snapshot("status failed", process.errorString() or "Failed to fetch Tailscale status.")
+        self._apply_status_snapshot(snapshot, initial=initial)
+        self._finish_status_process(process)
+
+    def _finish_status_process(self, process: QProcess) -> None:
+        process.deleteLater()
+        if self.status_process is process:
+            self.status_process = None
+
+        if self.pending_refresh:
+            self.pending_refresh = False
+            self.refresh_status()
 
     def apply_snapshot(self) -> None:
         snapshot = self.snapshot
