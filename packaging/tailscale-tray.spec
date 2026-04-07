@@ -5,13 +5,14 @@ Summary:        KDE system tray helper for Tailscale
 License:        MIT
 URL:            https://github.com/iamstevedavis/tailscale-tray
 BuildArch:      x86_64
-Requires:       tailscale
+# Runtime requirement: a working `tailscale` CLI must be available on PATH or a supported fallback path.
 
 Source0:        dist/tailscale-tray
 Source1:        packaging/tailscale-tray.desktop
 
 %description
 A small KDE-friendly system tray app for Fedora/Linux that wraps the tailscale CLI.
+The app does not require the Fedora `tailscale` RPM specifically, but it does require a working `tailscale` binary at runtime.
 
 %prep
 # No source extraction needed for the prebuilt PyInstaller artifact.

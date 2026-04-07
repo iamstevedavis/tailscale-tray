@@ -2,13 +2,16 @@
 
 A small KDE-friendly system tray app for Fedora/Linux that wraps the `tailscale` CLI.
 
-## MVP features
+## Features
 
 - Polls `tailscale status --json`
 - Shows current state in the tray menu:
   - Connected
-  - Disconnected
+  - Connecting
+  - Stopped
   - Needs Login
+  - Needs Approval
+  - Unknown
   - Error
 - Quick actions:
   - Refresh
@@ -16,9 +19,11 @@ A small KDE-friendly system tray app for Fedora/Linux that wraps the `tailscale`
   - Disconnect
   - Copy Tailnet IP
   - Open Tailscale Admin
+  - Show diagnostics
   - Quit
 - Uses non-blocking command execution for `tailscale up` and `tailscale down`
 - Shows tray notifications for status changes and action results
+- Includes a diagnostics view for current backend state, CLI path, tailnet identity, and error details
 
 ## Requirements
 
@@ -31,10 +36,15 @@ A small KDE-friendly system tray app for Fedora/Linux that wraps the `tailscale`
 
 ### Fedora
 
+Install Python and PySide6 dependencies, plus any working Tailscale CLI installation you prefer.
+For Fedora RPM-based installs:
+
 ```bash
 sudo dnf install -y python3 python3-pip tailscale
 python3 -m pip install --user -r requirements.txt
 ```
+
+Snap-based `tailscale` installs are also supported, as long as the CLI is available to desktop apps.
 
 If Tailscale is not already authenticated:
 
@@ -121,7 +131,7 @@ A starter RPM spec is also included at:
 packaging/tailscale-tray.spec
 ```
 
-That is useful if you later want to switch from `fpm` to `rpmbuild`/COPR style packaging.
+That is useful if you later want to switch from `fpm` to `rpmbuild`/COPR style packaging. Keep it aligned with the runtime behavior documented above, especially the lack of a hard dependency on the Fedora `tailscale` RPM.
 
 ## Desktop file
 
