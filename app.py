@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import json
-import shutil
 import subprocess
 import sys
 from typing import Optional
@@ -9,6 +8,7 @@ from PySide6.QtCore import QProcess, QTimer, QUrl
 from PySide6.QtGui import QAction, QClipboard, QDesktopServices, QIcon
 from PySide6.QtWidgets import QApplication, QMenu, QMessageBox, QStyle, QSystemTrayIcon
 
+from tailscale_cli import detect_tailscale_path, missing_tailscale_message
 from tailscale_status import ConnectionState, TailscaleSnapshot, error_snapshot, parse_status_payload
 
 
@@ -34,7 +34,7 @@ class TailscaleTray:
             error="",
         )
         self.command_process: Optional[QProcess] = None
-        self.tailscale_path = shutil.which("tailscale")
+        self.tailscale_path = detect_tailscale_path()
 
         self._build_menu()
         self._build_timer()
@@ -111,7 +111,7 @@ class TailscaleTray:
 
     def fetch_status(self) -> TailscaleSnapshot:
         if not self.tailscale_path:
-            return error_snapshot("tailscale not found", "Install the `tailscale` CLI and ensure it is on PATH.")
+            return error_snapshot("tailscale not found", missing_tailscale_message())
 
         try:
             result = subprocess.run(
@@ -151,7 +151,7 @@ class TailscaleTray:
 
     def run_tailscale_command(self, args: list[str], action_name: str) -> None:
         if not self.tailscale_path:
-            self.show_message("Tailscale missing", "Could not find `tailscale` on PATH.", QSystemTrayIcon.MessageIcon.Critical)
+            self.show_message("Tailscale missing", missing_tailscale_message(), QSystemTrayIcon.MessageIcon.Critical)
             return
         if self.command_process and self.command_process.state() != QProcess.ProcessState.NotRunning:
             self.show_message("Command already running", "Wait for the current Tailscale command to finish.")

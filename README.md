@@ -93,7 +93,7 @@ Install the resulting artifact with:
 sudo dnf install ./artifacts/tailscale-tray-0.1.0-1.$(uname -m).rpm
 ```
 
-Note: the RPM does not force-install the Fedora `tailscale` package. The app only requires that a working `tailscale` CLI is available on your `PATH` at runtime, including Snap installs.
+Note: the RPM does not force-install the Fedora `tailscale` package. The app only requires that a working `tailscale` CLI is available at runtime. It checks normal `PATH` resolution first, then common fallback locations including Snap paths.
 
 ### Native Fedora build dependencies
 
