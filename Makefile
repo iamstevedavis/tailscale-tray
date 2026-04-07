@@ -5,7 +5,14 @@ PYTHON ?= python3
 .PHONY: test build-binary build-rpm build-rpm-container clean
 
 test:
-	$(PYTHON) -m py_compile app.py tailscale_status.py
+	$(PYTHON) -m py_compile \
+		app.py \
+		tailscale_status.py \
+		tailscale_cli.py \
+		tailscale_command.py \
+		tray_view.py \
+		tray_controller.py \
+		diagnostics_view.py
 	$(PYTHON) -m unittest discover -s tests -v
 
 build-binary: test
