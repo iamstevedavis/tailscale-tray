@@ -35,7 +35,7 @@ class TailscaleTray:
         self.command_process: Optional[QProcess] = None
         self.status_process: Optional[QProcess] = None
         self.pending_refresh = False
-        self.tailscale_path = detect_tailscale_path()
+        self.tailscale_path = None
 
         self._build_menu()
         self._build_timer()
@@ -103,13 +103,17 @@ class TailscaleTray:
             return style.standardIcon(QStyle.StandardPixmap.SP_MessageBoxCritical)
         return style.standardIcon(QStyle.StandardPixmap.SP_DialogCancelButton)
 
+    def resolve_tailscale_path(self) -> str | None:
+        self.tailscale_path = detect_tailscale_path()
+        return self.tailscale_path
+
     def refresh_status(self, initial: bool = False) -> None:
         if self.status_process and self.status_process.state() != QProcess.ProcessState.NotRunning:
             self.pending_refresh = True
             return
 
-        self.tailscale_path = detect_tailscale_path()
-        if not self.tailscale_path:
+        tailscale_path = self.resolve_tailscale_path()
+        if not tailscale_path:
             self._apply_status_snapshot(
                 error_snapshot("tailscale not found", missing_tailscale_message()),
                 initial=initial,
@@ -117,7 +121,7 @@ class TailscaleTray:
             return
 
         process = QProcess(self.app)
-        process.setProgram(self.tailscale_path)
+        process.setProgram(tailscale_path)
         process.setArguments(["status", "--json"])
         process.finished.connect(
             lambda code, status: self._status_finished(process, code, status, initial)
@@ -197,7 +201,8 @@ class TailscaleTray:
         self.disconnect_action.setEnabled(snapshot.state in {ConnectionState.CONNECTED, ConnectionState.CONNECTING})
 
     def run_tailscale_command(self, args: list[str], action_name: str) -> None:
-        if not self.tailscale_path:
+        tailscale_path = self.resolve_tailscale_path()
+        if not tailscale_path:
             self.show_message("Tailscale missing", missing_tailscale_message(), QSystemTrayIcon.MessageIcon.Critical)
             return
         if self.command_process and self.command_process.state() != QProcess.ProcessState.NotRunning:
@@ -205,7 +210,7 @@ class TailscaleTray:
             return
 
         process = QProcess(self.app)
-        process.setProgram(self.tailscale_path)
+        process.setProgram(tailscale_path)
         process.setArguments(args)
         process.finished.connect(lambda code, status: self._command_finished(process, code, status, action_name))
         process.errorOccurred.connect(lambda _err: self._command_failed(process, action_name))
@@ -227,10 +232,12 @@ class TailscaleTray:
         self.command_process = None
 
     def _command_failed(self, process: QProcess, action_name: str) -> None:
+        self.resolve_tailscale_path()
         detail = process.errorString() or f"{action_name} failed to start."
         self.show_message(action_name, detail, QSystemTrayIcon.MessageIcon.Critical)
         process.deleteLater()
         self.command_process = None
+        self.refresh_status()
 
     def copy_tailnet_ip(self) -> None:
         if not self.snapshot.tailnet_ip:
