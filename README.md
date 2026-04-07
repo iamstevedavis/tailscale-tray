@@ -78,6 +78,8 @@ Or run the script directly:
 ./scripts/build-rpm-container.sh 0.1.0
 ```
 
+On SELinux-enabled Fedora hosts, the script automatically applies the correct bind-mount relabeling for Docker.
+
 That flow:
 
 1. builds `packaging/Dockerfile.rpm-build`
