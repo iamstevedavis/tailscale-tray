@@ -25,6 +25,7 @@ rm -rf build dist
 ARGS=(
   --noconfirm
   --clean
+  --specpath build
   --name "$APP_NAME"
   --onefile
   --windowed

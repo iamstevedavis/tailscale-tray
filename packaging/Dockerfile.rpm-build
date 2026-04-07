@@ -1,0 +1,25 @@
+FROM fedora:42
+
+RUN dnf install -y \
+    python3 \
+    python3-pip \
+    rpm-build \
+    rpmdevtools \
+    desktop-file-utils \
+    ruby \
+    ruby-devel \
+    gcc \
+    gcc-c++ \
+    make \
+    git \
+    which \
+    file \
+    && dnf clean all
+
+RUN gem install --no-document fpm
+
+WORKDIR /tmp/build-bootstrap
+COPY requirements.txt requirements-build.txt ./
+RUN python3 -m pip install --break-system-packages -r requirements-build.txt
+
+WORKDIR /src

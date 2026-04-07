@@ -34,6 +34,7 @@ if command -v desktop-file-validate >/dev/null 2>&1; then
 fi
 
 rm -rf "$PKGROOT"
+rm -f "$ROOT_DIR/$APP_NAME-$VERSION"-*.rpm
 mkdir -p \
   "$PKGROOT/usr/bin" \
   "$PKGROOT/usr/share/applications" \

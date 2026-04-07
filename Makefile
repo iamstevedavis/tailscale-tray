@@ -2,7 +2,7 @@ APP_NAME := tailscale-tray
 VERSION ?= 0.1.0
 PYTHON ?= python3
 
-.PHONY: test build-binary build-rpm clean
+.PHONY: test build-binary build-rpm build-rpm-container clean
 
 test:
 	$(PYTHON) -m py_compile app.py tailscale_status.py
@@ -14,5 +14,8 @@ build-binary: test
 build-rpm: build-binary
 	./scripts/build-rpm.sh $(VERSION)
 
+build-rpm-container:
+	./scripts/build-rpm-container.sh $(VERSION)
+
 clean:
-	rm -rf build dist pkgroot *.spec.tmp
+	rm -rf build dist pkgroot tailscale-tray.spec *.spec.tmp

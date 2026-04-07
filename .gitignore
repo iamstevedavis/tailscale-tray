@@ -10,6 +10,7 @@ venv/
 build/
 dist/
 pkgroot/
+artifacts/
 *.spec.tmp
 *.rpm
 *.egg-info/
