@@ -52,8 +52,7 @@ fi
   -v "$VERSION" \
   --iteration "$ITERATION" \
   --architecture "$ARCH" \
-  --depends tailscale \
-  --description "KDE system tray app for Tailscale" \
+  --description "KDE system tray app for Tailscale (requires tailscale CLI on PATH at runtime)" \
   --url "https://github.com/iamstevedavis/tailscale-tray" \
   --license "MIT" \
   --maintainer "Steve Davis" \
