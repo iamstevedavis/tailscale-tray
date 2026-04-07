@@ -55,18 +55,50 @@ python3 app.py
 - The app intentionally stays simple. It shells out to the official `tailscale` CLI instead of reimplementing Tailscale behavior.
 - The default admin link opens the machine list in the Tailscale admin console.
 
-## Optional desktop launch
+## Packaging and installer
 
-A sample desktop file is included at:
+This repo includes a Fedora-friendly packaging flow:
+
+- `./scripts/build-binary.sh` builds a self-contained PyInstaller binary
+- `./scripts/build-rpm.sh <version>` wraps that binary in an RPM using `fpm`
+- `make build-rpm VERSION=0.1.0` runs tests, builds the binary, then builds the RPM
+
+### Fedora build dependencies
+
+```bash
+sudo dnf install -y python3 python3-pip rpm-build rpmdevtools desktop-file-utils
+python3 -m pip install --user -r requirements-build.txt
+
+sudo dnf install -y ruby ruby-devel gcc make
+sudo gem install fpm
+```
+
+### Build RPM
+
+```bash
+make build-rpm VERSION=0.1.0
+```
+
+The resulting RPM can be installed with:
+
+```bash
+sudo dnf install ./tailscale-tray-0.1.0-1.$(uname -m).rpm
+```
+
+### Alternative spec file
+
+A starter RPM spec is also included at:
+
+```text
+packaging/tailscale-tray.spec
+```
+
+That is useful if you later want to switch from `fpm` to `rpmbuild`/COPR style packaging.
+
+## Desktop file
+
+The desktop launcher used by the RPM lives at:
 
 ```text
 packaging/tailscale-tray.desktop
 ```
-
-You can copy it into:
-
-```text
-~/.local/share/applications/
-```
-
-and adjust the `Exec=` path for your checkout.
