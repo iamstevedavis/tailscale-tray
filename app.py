@@ -204,11 +204,14 @@ class TailscaleTray:
         process = QProcess(self.app)
         process.setProgram(tailscale_path)
         process.setArguments(args)
+        process.started.connect(lambda: self._command_started(args, action_name))
         process.finished.connect(lambda code, status: self._command_finished(process, code, status, action_name))
         process.errorOccurred.connect(lambda _err: self._command_failed(process, action_name))
         self.command_process = process
-        self.show_message(f"{action_name} started", f"Running: tailscale {' '.join(args)}")
         process.start()
+
+    def _command_started(self, args: list[str], action_name: str) -> None:
+        self.show_message(f"{action_name} started", f"Running: tailscale {' '.join(args)}")
 
     def _command_finished(self, process: QProcess, exit_code: int, _exit_status: QProcess.ExitStatus, action_name: str) -> None:
         stdout = bytes(process.readAllStandardOutput()).decode().strip()
