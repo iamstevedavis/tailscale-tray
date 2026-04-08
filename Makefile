@@ -28,4 +28,4 @@ build-aur-artifact:
 	./scripts/build-aur-artifact.sh $(VERSION)
 
 clean:
-	rm -rf build dist pkgroot tailscale-tray.spec *.spec.tmp artifacts/PKGBUILD artifacts/.SRCINFO artifacts/*-aur.tar.gz
+	rm -rf build dist pkgroot tailscale-tray.spec *.spec.tmp artifacts/PKGBUILD artifacts/.SRCINFO artifacts/*-arch-release.zip

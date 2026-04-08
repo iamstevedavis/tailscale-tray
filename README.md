@@ -59,9 +59,16 @@ A fuller screenshots section is still on the roadmap. For now, the icon and READ
 
 ## Install
 
-### RPM install
+### Fedora
 
-Download the latest RPM from GitHub Releases, then install it:
+Install Tailscale first if it is not already present:
+
+```bash
+sudo dnf install tailscale
+sudo systemctl enable --now tailscaled
+```
+
+Then download the latest RPM from GitHub Releases and install it:
 
 ```bash
 sudo dnf install ./tailscale-tray-<version>-1.$(uname -m).rpm
@@ -79,20 +86,29 @@ To uninstall:
 sudo dnf remove tailscale-tray
 ```
 
-### AUR / Arch install
+### Arch Linux
 
-Each GitHub release now also includes AUR packaging artifacts:
+Install the runtime dependencies first:
+
+```bash
+sudo pacman -S --needed tailscale python python-pyside6 hicolor-icon-theme
+sudo systemctl enable --now tailscaled
+```
+
+Each GitHub release includes a single Arch packaging bundle:
+- `tailscale-tray-<version>-arch-release.zip`
+
+That zip contains the Arch-only packaging metadata files:
 - `PKGBUILD`
 - `.SRCINFO`
-- `tailscale-tray-<version>-aur.tar.gz`
 
 These are intended for AUR publishing or manual Arch packaging, not direct `pacman -U` installation.
 
 Typical local build flow on Arch:
 
 ```bash
-tar -xzf tailscale-tray-<version>-aur.tar.gz
-cd tailscale-tray
+curl -LO https://github.com/iamstevedavis/tailscale-tray/releases/download/v<version>/tailscale-tray-<version>-arch-release.zip
+unzip tailscale-tray-<version>-arch-release.zip
 makepkg -si
 ```
 
@@ -190,7 +206,7 @@ python3 app.py
 
 ## Packaging
 
-This repo supports RPM builds and generated AUR packaging artifacts.
+This repo supports RPM builds and generated Arch/AUR packaging artifacts.
 
 ### Recommended: containerized build
 
@@ -232,6 +248,7 @@ Key packaging files:
 - `packaging/tailscale-tray.spec`
 - `packaging/Dockerfile.rpm-build`
 - `packaging/arch/PKGBUILD.in`
+- generated `.SRCINFO` metadata
 
 ## CI and releases
 
@@ -246,10 +263,10 @@ On pushes to `master` and on pull requests:
 
 There is a release workflow that:
 - builds the RPM in Docker
-- generates AUR packaging artifacts (`PKGBUILD`, `.SRCINFO`, release tarball)
+- generates an Arch release bundle containing `PKGBUILD` and `.SRCINFO`
 - uploads workflow artifacts
 - creates a GitHub Release
-- attaches the built RPM, AUR artifacts, and `SHA256SUMS.txt`
+- attaches the built RPM, Arch bundle, and `SHA256SUMS.txt`
 - uses tag-driven versioning
 - generates release notes automatically
 - respects `.github/release.yml` changelog categories
