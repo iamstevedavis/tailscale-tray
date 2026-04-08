@@ -16,7 +16,7 @@ SOURCE_URL="https://github.com/iamstevedavis/tailscale-tray/archive/refs/tags/v$
 SOURCE_TARBALL="${WORK_DIR}/tailscale-tray-${VERSION}.tar.gz"
 PKGBUILD_PATH="${ARTIFACTS_DIR}/PKGBUILD"
 SRCINFO_PATH="${ARTIFACTS_DIR}/.SRCINFO"
-AUR_BUNDLE_PATH="${ARTIFACTS_DIR}/tailscale-tray-${VERSION}-aur.tar.gz"
+AUR_BUNDLE_PATH="${ARTIFACTS_DIR}/tailscale-tray-${VERSION}-arch-release.zip"
 
 mkdir -p "${ARTIFACTS_DIR}"
 
@@ -43,7 +43,16 @@ else
 fi
 
 rm -f "${AUR_BUNDLE_PATH}"
-tar -C "${ARTIFACTS_DIR}" -czf "${AUR_BUNDLE_PATH}" PKGBUILD .SRCINFO
+python3 - <<PY
+import pathlib
+import zipfile
+
+artifacts_dir = pathlib.Path(${ARTIFACTS_DIR@Q})
+zip_path = pathlib.Path(${AUR_BUNDLE_PATH@Q})
+with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+    zf.write(artifacts_dir / "PKGBUILD", arcname="PKGBUILD")
+    zf.write(artifacts_dir / ".SRCINFO", arcname=".SRCINFO")
+PY
 
 echo "Built AUR artifacts:"
 echo "  ${PKGBUILD_PATH}"
