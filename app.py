@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
+import os
 import shutil
+import subprocess
 import sys
 
 from PySide6.QtCore import QProcess, QTimer, QUrl
@@ -180,11 +182,28 @@ class TailscaleTray:
     def open_tailscale_admin(self) -> None:
         xdg_open = shutil.which("xdg-open")
         if xdg_open:
-            started = QProcess.startDetached(xdg_open, [TAILSCALE_ADMIN_URL])
-            if isinstance(started, tuple):
-                started = started[0]
-            if started:
+            clean_env = os.environ.copy()
+            for key in (
+                "LD_LIBRARY_PATH",
+                "QT_PLUGIN_PATH",
+                "QML2_IMPORT_PATH",
+                "PYINSTALLER_SUPPRESS_SPLASH_SCREEN",
+                "PYINSTALLER_RESET_ENVIRONMENT",
+                "PYTHONHOME",
+                "PYTHONPATH",
+            ):
+                clean_env.pop(key, None)
+            try:
+                subprocess.Popen(
+                    [xdg_open, TAILSCALE_ADMIN_URL],
+                    env=clean_env,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    start_new_session=True,
+                )
                 return
+            except OSError:
+                pass
 
         ok = QDesktopServices.openUrl(QUrl(TAILSCALE_ADMIN_URL))
         if ok:
