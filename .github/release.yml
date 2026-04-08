@@ -1,0 +1,25 @@
+changelog:
+  exclude:
+    labels:
+      - skip-changelog
+      - chore
+  categories:
+    - title: Features
+      labels:
+        - enhancement
+        - feature
+    - title: Fixes
+      labels:
+        - bug
+        - fix
+    - title: Packaging and release
+      labels:
+        - packaging
+        - release
+        - ci
+    - title: Documentation
+      labels:
+        - docs
+    - title: Other changes
+      labels:
+        - '*'

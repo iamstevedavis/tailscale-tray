@@ -1,5 +1,9 @@
 # tailscale-tray
 
+[![CI](https://github.com/iamstevedavis/tailscale-tray/actions/workflows/ci.yml/badge.svg)](https://github.com/iamstevedavis/tailscale-tray/actions/workflows/ci.yml)
+[![Release RPM](https://github.com/iamstevedavis/tailscale-tray/actions/workflows/release.yml/badge.svg)](https://github.com/iamstevedavis/tailscale-tray/actions/workflows/release.yml)
+[![Latest Release](https://img.shields.io/github/v/release/iamstevedavis/tailscale-tray)](https://github.com/iamstevedavis/tailscale-tray/releases/latest)
+
 A small KDE-friendly Linux system tray app for Tailscale.
 
 It wraps the official `tailscale` CLI, shows current connection state in the tray, and gives quick desktop actions for common tasks without trying to replace the Tailscale client itself.
@@ -9,6 +13,16 @@ It wraps the official `tailscale` CLI, shows current connection state in the tra
 - KDE Plasma users who want a lightweight tray app
 - Fedora users first, other Linux desktops second
 - People who already have a working Tailscale CLI install and want a friendlier desktop control surface
+
+## Preview
+
+Current packaged app icon:
+
+<p align="center">
+  <img src="assets/tailscale-tray.svg" alt="tailscale-tray icon" width="128" />
+</p>
+
+A fuller screenshots section is still on the roadmap. For now, the icon and README cover the current UX shape, and real KDE screenshots can be added as the UI settles.
 
 ## Features
 
@@ -218,6 +232,8 @@ There is a release workflow that:
 - creates a GitHub Release
 - attaches the built RPM and `SHA256SUMS.txt`
 - uses tag-driven versioning
+- generates release notes automatically
+- respects `.github/release.yml` changelog categories
 
 Release versioning is based on Git tags like:
 
@@ -253,3 +269,10 @@ Useful commands:
 make test
 make build-rpm-container VERSION=0.1.0
 ```
+
+## Maintainer notes
+
+If you are shipping a release:
+- use `RELEASE_CHECKLIST.md`
+- prefer tagging `vX.Y.Z`
+- let GitHub Actions build and attach the RPM instead of hand-uploading artifacts
