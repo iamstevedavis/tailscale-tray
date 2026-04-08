@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import shutil
 import sys
 
 from PySide6.QtCore import QProcess, QTimer, QUrl
@@ -177,13 +178,25 @@ class TailscaleTray:
         QMessageBox.information(None, diagnostics.title, diagnostics.message)
 
     def open_tailscale_admin(self) -> None:
+        xdg_open = shutil.which("xdg-open")
+        if xdg_open:
+            started = QProcess.startDetached(xdg_open, [TAILSCALE_ADMIN_URL])
+            if isinstance(started, tuple):
+                started = started[0]
+            if started:
+                return
+
         ok = QDesktopServices.openUrl(QUrl(TAILSCALE_ADMIN_URL))
-        if not ok:
-            self.show_message(
-                "Open Tailscale Admin",
-                "Could not open the Tailscale Admin page. Check your default browser or URL handler.",
-                QSystemTrayIcon.MessageIcon.Warning,
-            )
+        if ok:
+            return
+
+        message = "Could not open the Tailscale Admin page. Check your default browser or URL handler."
+        self.show_message(
+            "Open Tailscale Admin",
+            message,
+            QSystemTrayIcon.MessageIcon.Warning,
+        )
+        QMessageBox.warning(None, "Open Tailscale Admin", message)
 
     def show_message(
         self,
