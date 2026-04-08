@@ -1,4 +1,4 @@
-name: Release RPM
+name: Release Packages
 
 on:
   push:
@@ -46,7 +46,7 @@ jobs:
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
           echo "prerelease=${PRERELEASE}" >> "$GITHUB_OUTPUT"
-          echo "artifact_name=tailscale-tray-${VERSION}-rpm" >> "$GITHUB_OUTPUT"
+          echo "artifact_name=tailscale-tray-${VERSION}-release-artifacts" >> "$GITHUB_OUTPUT"
 
       - name: Create and push tag for manual release
         if: github.event_name == 'workflow_dispatch'
@@ -69,9 +69,12 @@ jobs:
       - name: Build RPM artifact
         run: make build-rpm-container VERSION=${{ steps.version.outputs.version }}
 
+      - name: Build AUR artifacts
+        run: make build-aur-artifact VERSION=${{ steps.version.outputs.version }}
+
       - name: Generate checksums
         working-directory: artifacts
-        run: sha256sum *.rpm > SHA256SUMS.txt
+        run: sha256sum *.rpm PKGBUILD .SRCINFO *.tar.gz > SHA256SUMS.txt
 
       - name: Upload workflow artifacts
         uses: actions/upload-artifact@v4
@@ -79,6 +82,9 @@ jobs:
           name: ${{ steps.version.outputs.artifact_name }}
           path: |
             artifacts/*.rpm
+            artifacts/PKGBUILD
+            artifacts/.SRCINFO
+            artifacts/*-aur.tar.gz
             artifacts/SHA256SUMS.txt
 
       - name: Create GitHub release
@@ -90,4 +96,7 @@ jobs:
           generate_release_notes: true
           files: |
             artifacts/*.rpm
+            artifacts/PKGBUILD
+            artifacts/.SRCINFO
+            artifacts/*-aur.tar.gz
             artifacts/SHA256SUMS.txt

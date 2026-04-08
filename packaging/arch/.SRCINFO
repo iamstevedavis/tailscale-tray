@@ -1,0 +1,16 @@
+pkgbase = tailscale-tray
+	pkgdesc = KDE-friendly Linux tray app for Tailscale
+	pkgver = 1.0.0
+	pkgrel = 1
+	url = https://github.com/iamstevedavis/tailscale-tray
+	arch = any
+	license = MIT
+	depends = python
+	depends = python-pyside6
+	depends = tailscale
+	depends = hicolor-icon-theme
+	optdepends = xdg-utils: preferred xdg-open integration for opening the Tailscale admin page
+	source = tailscale-tray-1.0.0.tar.gz::https://github.com/iamstevedavis/tailscale-tray/archive/refs/tags/v1.0.0.tar.gz
+	sha256sums = f88e73b579d94ebc6dbfcd62bb1f7cdf6b769e859d58645b149c2bc63417dada
+
+pkgname = tailscale-tray

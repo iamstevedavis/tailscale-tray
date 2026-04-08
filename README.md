@@ -79,6 +79,23 @@ To uninstall:
 sudo dnf remove tailscale-tray
 ```
 
+### AUR / Arch install
+
+Each GitHub release now also includes AUR packaging artifacts:
+- `PKGBUILD`
+- `.SRCINFO`
+- `tailscale-tray-<version>-aur.tar.gz`
+
+These are intended for AUR publishing or manual Arch packaging, not direct `pacman -U` installation.
+
+Typical local build flow on Arch:
+
+```bash
+tar -xzf tailscale-tray-<version>-aur.tar.gz
+cd tailscale-tray
+makepkg -si
+```
+
 ### Runtime dependency
 
 This app does not require the Fedora `tailscale` RPM specifically. It only needs a working `tailscale` CLI available at runtime.
@@ -173,7 +190,7 @@ python3 app.py
 
 ## Packaging
 
-This repo supports two RPM build flows.
+This repo supports RPM builds and generated AUR packaging artifacts.
 
 ### Recommended: containerized build
 
@@ -214,6 +231,7 @@ Key packaging files:
 - `packaging/tailscale-tray.desktop`
 - `packaging/tailscale-tray.spec`
 - `packaging/Dockerfile.rpm-build`
+- `packaging/arch/PKGBUILD.in`
 
 ## CI and releases
 
@@ -228,9 +246,10 @@ On pushes to `master` and on pull requests:
 
 There is a release workflow that:
 - builds the RPM in Docker
+- generates AUR packaging artifacts (`PKGBUILD`, `.SRCINFO`, release tarball)
 - uploads workflow artifacts
 - creates a GitHub Release
-- attaches the built RPM and `SHA256SUMS.txt`
+- attaches the built RPM, AUR artifacts, and `SHA256SUMS.txt`
 - uses tag-driven versioning
 - generates release notes automatically
 - respects `.github/release.yml` changelog categories
@@ -268,6 +287,7 @@ Useful commands:
 ```bash
 make test
 make build-rpm-container VERSION=0.1.0
+make build-aur-artifact VERSION=0.1.0
 ```
 
 ## Maintainer notes
