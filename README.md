@@ -59,9 +59,16 @@ A fuller screenshots section is still on the roadmap. For now, the icon and READ
 
 ## Install
 
-### RPM install
+### Fedora
 
-Download the latest RPM from GitHub Releases, then install it:
+Install Tailscale first if it is not already present:
+
+```bash
+sudo dnf install tailscale
+sudo systemctl enable --now tailscaled
+```
+
+Then download the latest RPM from GitHub Releases and install it:
 
 ```bash
 sudo dnf install ./tailscale-tray-<version>-1.$(uname -m).rpm
@@ -79,9 +86,16 @@ To uninstall:
 sudo dnf remove tailscale-tray
 ```
 
-### AUR / Arch install
+### Arch Linux
 
-Each GitHub release now includes a single Arch packaging bundle:
+Install the runtime dependencies first:
+
+```bash
+sudo pacman -S --needed tailscale python python-pyside6 hicolor-icon-theme
+sudo systemctl enable --now tailscaled
+```
+
+Each GitHub release includes a single Arch packaging bundle:
 - `tailscale-tray-<version>-arch-release.zip`
 
 That zip contains the Arch-only packaging metadata files:
@@ -93,6 +107,7 @@ These are intended for AUR publishing or manual Arch packaging, not direct `pacm
 Typical local build flow on Arch:
 
 ```bash
+curl -LO https://github.com/iamstevedavis/tailscale-tray/releases/download/v<version>/tailscale-tray-<version>-arch-release.zip
 unzip tailscale-tray-<version>-arch-release.zip
 makepkg -si
 ```
