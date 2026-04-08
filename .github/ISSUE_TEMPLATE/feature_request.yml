@@ -1,0 +1,52 @@
+name: Feature request
+description: Suggest an improvement for tailscale-tray
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the idea. Please focus on the user problem first, then the proposed solution.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem are you trying to solve?
+      placeholder: It is hard to tell why Connect failed without opening a terminal.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would you like to see?
+      placeholder: Add a clearer failure dialog that suggests likely causes.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Optional, but helpful if you already tried other approaches.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: What area does this affect?
+      options:
+        - Tray UI
+        - Diagnostics
+        - Packaging / release
+        - Install / docs
+        - Desktop integration
+        - Tailscale command behavior
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Extra context
+      description: Mockups, screenshots, related tools, or platform-specific notes.

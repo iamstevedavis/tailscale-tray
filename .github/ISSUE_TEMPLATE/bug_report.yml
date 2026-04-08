@@ -1,0 +1,99 @@
+name: Bug report
+description: Report a problem with tailscale-tray
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting this. Please include enough detail to reproduce the problem, especially your desktop environment, install method, and how Tailscale is installed.
+
+  - type: input
+    id: version
+    attributes:
+      label: App version
+      description: What version of tailscale-tray are you running?
+      placeholder: 0.1.0
+    validations:
+      required: true
+
+  - type: input
+    id: distro
+    attributes:
+      label: Linux distro and version
+      placeholder: Fedora 42 KDE
+    validations:
+      required: true
+
+  - type: input
+    id: desktop
+    attributes:
+      label: Desktop environment
+      placeholder: KDE Plasma 6
+    validations:
+      required: true
+
+  - type: dropdown
+    id: install_method
+    attributes:
+      label: How did you install tailscale-tray?
+      options:
+        - RPM from GitHub Releases
+        - Built from source
+        - Running from source without installing
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: tailscale_install
+    attributes:
+      label: How is Tailscale installed?
+      options:
+        - Fedora/RPM package
+        - Snap
+        - Manual binary install
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: bug
+    attributes:
+      label: What happened?
+      description: Describe the bug clearly.
+      placeholder: Clicking Open Tailscale Admin does nothing.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect to happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Launch tailscale-tray
+        2. Open tray menu
+        3. Click Open Tailscale Admin
+        4. Nothing happens
+    validations:
+      required: true
+
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics / logs
+      description: Paste relevant output from Show diagnostics, terminal logs, or command output.
+      render: shell
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Extra context
+      description: Screenshots, related issues, packaging quirks, or anything else helpful.

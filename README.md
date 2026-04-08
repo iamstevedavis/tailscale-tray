@@ -242,6 +242,11 @@ You can trigger releases in two ways:
 
 Issues and PRs are welcome.
 
+See:
+- `CONTRIBUTING.md`
+- `RELEASE_CHECKLIST.md`
+- `.github/ISSUE_TEMPLATE/`
+
 Useful commands:
 
 ```bash
