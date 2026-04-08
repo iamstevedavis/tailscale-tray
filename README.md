@@ -1,9 +1,18 @@
 # tailscale-tray
 
-A small KDE-friendly system tray app for Fedora/Linux that wraps the `tailscale` CLI.
+A small KDE-friendly Linux system tray app for Tailscale.
+
+It wraps the official `tailscale` CLI, shows current connection state in the tray, and gives quick desktop actions for common tasks without trying to replace the Tailscale client itself.
+
+## Who this is for
+
+- KDE Plasma users who want a lightweight tray app
+- Fedora users first, other Linux desktops second
+- People who already have a working Tailscale CLI install and want a friendlier desktop control surface
 
 ## Features
 
+- Branded TS tray icon with per-state status overlays
 - Polls `tailscale status --json`
 - Shows current state in the tray menu:
   - Connected
@@ -21,122 +30,221 @@ A small KDE-friendly system tray app for Fedora/Linux that wraps the `tailscale`
   - Open Tailscale Admin
   - Show diagnostics
   - Quit
-- Uses non-blocking command execution for `tailscale up` and `tailscale down`
-- Shows tray notifications for status changes and action results
-- Includes a diagnostics view for current backend state, CLI path, tailnet identity, and error details
+- Non-blocking status refresh and command execution
+- Tray notifications for important state changes and action results
+- Diagnostics view for backend state, CLI path, tailnet identity, and current error details
+- Snap-friendly CLI detection, plus common fallback binary paths
 
 ## Requirements
 
-- Fedora KDE or another Linux desktop with StatusNotifier/system tray support
+- Linux desktop with StatusNotifier/system tray support
+- KDE Plasma is the primary target and tested path
 - Python 3.10+
-- Tailscale CLI installed and working
+- A working `tailscale` CLI installation
 - PySide6
 
 ## Install
 
-### Fedora
+### RPM install
 
-Install Python and PySide6 dependencies, plus any working Tailscale CLI installation you prefer.
-For Fedora RPM-based installs:
+Download the latest RPM from GitHub Releases, then install it:
 
 ```bash
-sudo dnf install -y python3 python3-pip tailscale
-python3 -m pip install --user -r requirements.txt
+sudo dnf install ./tailscale-tray-<version>-1.$(uname -m).rpm
 ```
 
-Snap-based `tailscale` installs are also supported, as long as the CLI is available to desktop apps.
+To reinstall the same version during testing:
 
-If Tailscale is not already authenticated:
+```bash
+sudo dnf reinstall ./tailscale-tray-<version>-1.$(uname -m).rpm
+```
+
+To uninstall:
+
+```bash
+sudo dnf remove tailscale-tray
+```
+
+### Runtime dependency
+
+This app does not require the Fedora `tailscale` RPM specifically. It only needs a working `tailscale` CLI available at runtime.
+
+Lookup order is:
+- normal `PATH`
+- `/var/lib/snapd/snap/bin/tailscale`
+- `/snap/bin/tailscale`
+- `/usr/local/bin/tailscale`
+- `/usr/bin/tailscale`
+
+That means Snap installs are supported as long as the desktop session can access the binary.
+
+### If Tailscale is not authenticated yet
 
 ```bash
 sudo systemctl enable --now tailscaled
 sudo tailscale up
 ```
 
-## Run
+## Usage
+
+Launch from your app launcher as **Tailscale Tray**, or run:
 
 ```bash
+tailscale-tray
+```
+
+Menu actions:
+- **Refresh**: re-checks current Tailscale state
+- **Connect**: runs `tailscale up`
+- **Disconnect**: runs `tailscale down`
+- **Copy Tailnet IP**: copies the currently detected tailnet IP
+- **Open Tailscale Admin**: opens the machine list in the Tailscale admin console
+- **Show diagnostics**: shows current state, backend state, detected CLI path, tailnet info, and current error
+
+## Troubleshooting
+
+### Tray icon does not appear
+
+- Confirm your desktop supports StatusNotifier/system tray icons
+- On KDE, try logging out and back in if the tray host is misbehaving
+- Start it from a terminal once to catch runtime errors:
+
+```bash
+tailscale-tray
+```
+
+### Tailscale CLI is not detected
+
+Make sure one of these works from the same user session that launches the app:
+
+```bash
+which tailscale
+ls -l /var/lib/snapd/snap/bin/tailscale /snap/bin/tailscale /usr/local/bin/tailscale /usr/bin/tailscale
+```
+
+If the binary exists but the app still cannot find it, open **Show diagnostics** and check the detected CLI path.
+
+### Open Tailscale Admin does nothing
+
+The app tries a sanitized `xdg-open` launch first, then falls back to Qt URL opening. If it still fails:
+
+```bash
+xdg-open https://login.tailscale.com/admin/machines
+```
+
+If that shell command works but the app action does not, file an issue with your desktop environment, distro, install method, and whether the packaged app was installed from the RPM.
+
+### Connect or Disconnect fails
+
+Some systems need polkit auth, elevated privileges, or an already-running `tailscaled` daemon. Use **Show diagnostics** and the tray notification text to see whether the failure looks like:
+- permission/polkit
+- `tailscaled` not running
+- browser login required
+- generic command failure
+
+## Development
+
+### Test locally
+
+```bash
+make test
+```
+
+### Run from source
+
+```bash
+python3 -m pip install --user -r requirements.txt
 python3 app.py
 ```
 
-## Notes
+## Packaging
 
-- Some actions may require elevated privileges depending on how Tailscale is installed on your machine.
-- The app intentionally stays simple. It shells out to the official `tailscale` CLI instead of reimplementing Tailscale behavior.
-- The default admin link opens the machine list in the Tailscale admin console.
-
-## Packaging and installer
-
-This repo includes two packaging flows:
-
-- `make build-rpm VERSION=0.1.0`
-  - builds directly on a Fedora host with local PyInstaller + `fpm`
-- `make build-rpm-container VERSION=0.1.0`
-  - builds inside a Fedora Docker container and writes the RPM back to the host under `./artifacts/`
+This repo supports two RPM build flows.
 
 ### Recommended: containerized build
 
-This avoids needing a Fedora workstation as the build host. You only need Docker.
+This is the easiest and most reproducible option. It only requires Docker on the host.
 
 ```bash
 make build-rpm-container VERSION=0.1.0
 ```
 
-Or run the script directly:
+Or directly:
 
 ```bash
 ./scripts/build-rpm-container.sh 0.1.0
 ```
 
-On SELinux-enabled Fedora hosts, the script automatically applies the correct bind-mount relabeling for Docker.
-
 That flow:
+- builds `packaging/Dockerfile.rpm-build`
+- runs the PyInstaller + RPM build inside a Fedora container
+- writes finished artifacts to `./artifacts/`
 
-1. builds `packaging/Dockerfile.rpm-build`
-2. installs PyInstaller and `fpm` inside the container
-3. runs the normal build pipeline in the container
-4. copies the generated RPM into `./artifacts/` on the host
+On SELinux-enabled Fedora hosts, the script automatically applies the correct Docker bind-mount relabeling.
 
-Install the resulting artifact with:
+### Native Fedora build
 
-```bash
-sudo dnf install ./artifacts/tailscale-tray-0.1.0-1.$(uname -m).rpm
-```
-
-Note: the RPM does not force-install the Fedora `tailscale` package. The app only requires that a working `tailscale` CLI is available at runtime. It checks normal `PATH` resolution first, then common fallback locations including Snap paths.
-
-### Native Fedora build dependencies
-
-If you still want to build natively on Fedora:
+If you want to build on a Fedora host directly:
 
 ```bash
 sudo dnf install -y python3 python3-pip rpm-build rpmdevtools desktop-file-utils
 python3 -m pip install --user -r requirements-build.txt
-
 sudo dnf install -y ruby ruby-devel gcc make
 sudo gem install fpm
-```
-
-### Native build RPM
-
-```bash
 make build-rpm VERSION=0.1.0
 ```
 
-### Alternative spec file
+### Desktop file and spec
 
-A starter RPM spec is also included at:
+Key packaging files:
+- `packaging/tailscale-tray.desktop`
+- `packaging/tailscale-tray.spec`
+- `packaging/Dockerfile.rpm-build`
 
-```text
-packaging/tailscale-tray.spec
+## CI and releases
+
+GitHub Actions now handles both validation and release packaging.
+
+### CI
+
+On pushes to `master` and on pull requests:
+- runs `make test`
+
+### Releases
+
+There is a release workflow that:
+- builds the RPM in Docker
+- uploads workflow artifacts
+- creates a GitHub Release
+- attaches the built RPM and `SHA256SUMS.txt`
+- uses tag-driven versioning
+
+Release versioning is based on Git tags like:
+
+```bash
+v0.1.0
+v0.1.1
+v0.2.0
 ```
 
-That is useful if you later want to switch from `fpm` to `rpmbuild`/COPR style packaging. Keep it aligned with the runtime behavior documented above, especially the lack of a hard dependency on the Fedora `tailscale` RPM.
+You can trigger releases in two ways:
+- push a tag like `v0.1.1`
+- run the **Release RPM** workflow manually and provide `0.1.1` or `v0.1.1`
 
-## Desktop file
+## Roadmap / known limitations
 
-The desktop launcher used by the RPM lives at:
+- KDE-first, Linux-only for now
+- No DE-specific packaging beyond RPM yet
+- No auto-update mechanism yet
+- No autostart installer flow yet
 
-```text
-packaging/tailscale-tray.desktop
+## Contributing
+
+Issues and PRs are welcome.
+
+Useful commands:
+
+```bash
+make test
+make build-rpm-container VERSION=0.1.0
 ```
