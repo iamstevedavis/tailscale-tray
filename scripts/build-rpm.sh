@@ -11,7 +11,8 @@ FPM_BIN="${FPM_BIN:-fpm}"
 APP_NAME="tailscale-tray"
 PKGROOT="$ROOT_DIR/pkgroot"
 DESKTOP_FILE="packaging/tailscale-tray.desktop"
-ICON_SOURCE="assets/tailscale-tray.png"
+ICON_SOURCE_PNG="assets/tailscale-tray.png"
+ICON_SOURCE_SVG="assets/tailscale-tray.svg"
 
 if ! command -v "$FPM_BIN" >/dev/null 2>&1; then
   echo "error: fpm not found on PATH" >&2
@@ -38,13 +39,18 @@ rm -f "$ROOT_DIR/$APP_NAME-$VERSION"-*.rpm
 mkdir -p \
   "$PKGROOT/usr/bin" \
   "$PKGROOT/usr/share/applications" \
-  "$PKGROOT/usr/share/icons/hicolor/256x256/apps"
+  "$PKGROOT/usr/share/icons/hicolor/256x256/apps" \
+  "$PKGROOT/usr/share/icons/hicolor/scalable/apps"
 
 install -m 0755 "dist/$APP_NAME" "$PKGROOT/usr/bin/$APP_NAME"
 install -m 0644 "$DESKTOP_FILE" "$PKGROOT/usr/share/applications/$APP_NAME.desktop"
 
-if [[ -f "$ICON_SOURCE" ]]; then
-  install -m 0644 "$ICON_SOURCE" "$PKGROOT/usr/share/icons/hicolor/256x256/apps/$APP_NAME.png"
+if [[ -f "$ICON_SOURCE_PNG" ]]; then
+  install -m 0644 "$ICON_SOURCE_PNG" "$PKGROOT/usr/share/icons/hicolor/256x256/apps/$APP_NAME.png"
+fi
+
+if [[ -f "$ICON_SOURCE_SVG" ]]; then
+  install -m 0644 "$ICON_SOURCE_SVG" "$PKGROOT/usr/share/icons/hicolor/scalable/apps/$APP_NAME.svg"
 fi
 
 "$FPM_BIN" -s dir -t rpm \

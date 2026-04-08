@@ -6,12 +6,13 @@ import sys
 
 from PySide6.QtCore import QProcess, QTimer, QUrl
 from PySide6.QtGui import QAction, QClipboard, QDesktopServices, QIcon
-from PySide6.QtWidgets import QApplication, QMenu, QMessageBox, QStyle, QSystemTrayIcon
+from PySide6.QtWidgets import QApplication, QMenu, QMessageBox, QSystemTrayIcon
 
 from diagnostics_view import build_diagnostics_view
 from tailscale_cli import detect_tailscale_path, missing_tailscale_message
 from tailscale_status import ConnectionState, TailscaleSnapshot
 from tray_controller import TrayController, TrayMessage
+from tray_icon import build_tray_icon
 from tray_view import build_tray_view
 
 
@@ -19,14 +20,6 @@ MESSAGE_ICONS = {
     "info": QSystemTrayIcon.MessageIcon.Information,
     "warning": QSystemTrayIcon.MessageIcon.Warning,
     "critical": QSystemTrayIcon.MessageIcon.Critical,
-}
-
-TRAY_ICONS = {
-    "connected": QStyle.StandardPixmap.SP_DialogApplyButton,
-    "connecting": QStyle.StandardPixmap.SP_BrowserReload,
-    "warning": QStyle.StandardPixmap.SP_MessageBoxWarning,
-    "critical": QStyle.StandardPixmap.SP_MessageBoxCritical,
-    "stopped": QStyle.StandardPixmap.SP_DialogCancelButton,
 }
 
 POLL_INTERVAL_MS = 10000
@@ -144,7 +137,7 @@ class TailscaleTray:
             self.controller.refresh_status()
 
     def _icon_for_key(self, icon_key: str) -> QIcon:
-        return self.app.style().standardIcon(TRAY_ICONS[icon_key])
+        return build_tray_icon(icon_key)
 
     def resolve_tailscale_path(self) -> str | None:
         self.tailscale_path = detect_tailscale_path()
@@ -230,6 +223,7 @@ def main() -> int:
     QApplication.setQuitOnLastWindowClosed(False)
     app = QApplication(sys.argv)
     app.setApplicationName("Tailscale Tray")
+    app.setWindowIcon(build_tray_icon("connected"))
 
     if not QSystemTrayIcon.isSystemTrayAvailable():
         QMessageBox.critical(None, "Tailscale Tray", "No system tray is available in this session.")

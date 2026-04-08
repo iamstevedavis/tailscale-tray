@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Tailscale Tray icon">
+  <circle cx="128" cy="128" r="124" fill="#0A3F71"/>
+  <circle cx="128" cy="128" r="108" fill="#0F5EA8"/>
+  <text x="128" y="78" text-anchor="middle" font-family="DejaVu Sans, Arial, sans-serif" font-size="64" font-weight="700" fill="#FFFFFF">T</text>
+  <text x="128" y="208" text-anchor="middle" font-family="DejaVu Sans, Arial, sans-serif" font-size="64" font-weight="700" fill="#FFFFFF">S</text>
+  <circle cx="128" cy="128" r="34" fill="#22C55E"/>
+  <path d="M112 129l12 12 22-28" fill="none" stroke="#FFFFFF" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
