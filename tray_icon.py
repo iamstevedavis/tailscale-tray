@@ -43,12 +43,13 @@ def _draw_base_badge(painter: QPainter, size: int) -> None:
 def _draw_letters(painter: QPainter, size: int) -> None:
     font = QFont("Sans Serif")
     font.setBold(True)
-    font.setPixelSize(int(size * 0.26))
+    font.setPixelSize(int(size * 0.23))
     painter.setFont(font)
     painter.setPen(QPen(TEXT))
 
-    painter.drawText(QRectF(0, size * 0.06, size, size * 0.3), Qt.AlignmentFlag.AlignHCenter, "T")
-    painter.drawText(QRectF(0, size * 0.60, size, size * 0.24), Qt.AlignmentFlag.AlignHCenter, "S")
+    align = Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter
+    painter.drawText(QRectF(0, size * 0.02, size, size * 0.24), align, "T")
+    painter.drawText(QRectF(0, size * 0.62, size, size * 0.20), align, "S")
 
 
 def _draw_status_overlay(painter: QPainter, size: int, icon_key: str) -> None:
@@ -69,9 +70,9 @@ def _draw_status_overlay(painter: QPainter, size: int, icon_key: str) -> None:
 
     if icon_key == "connected":
         path = QPainterPath()
-        path.moveTo(size * 0.41, size * 0.50)
-        path.lineTo(size * 0.48, size * 0.57)
-        path.lineTo(size * 0.60, size * 0.43)
+        path.moveTo(size * 0.40, size * 0.50)
+        path.lineTo(size * 0.48, size * 0.58)
+        path.lineTo(size * 0.62, size * 0.41)
         painter.drawPath(path)
     elif icon_key == "connecting":
         painter.drawArc(
