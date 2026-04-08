@@ -108,9 +108,7 @@ class TailscaleTray:
         self.copy_ip_action.triggered.connect(self.copy_tailnet_ip)
 
         self.open_admin_action = QAction("Open Tailscale Admin", self.menu)
-        self.open_admin_action.triggered.connect(
-            lambda: QDesktopServices.openUrl(QUrl(TAILSCALE_ADMIN_URL))
-        )
+        self.open_admin_action.triggered.connect(self.open_tailscale_admin)
 
         self.show_diagnostics_action = QAction("Show diagnostics", self.menu)
         self.show_diagnostics_action.triggered.connect(self.show_diagnostics)
@@ -177,6 +175,15 @@ class TailscaleTray:
     def show_diagnostics(self) -> None:
         diagnostics = build_diagnostics_view(self.snapshot, self.resolve_tailscale_path())
         QMessageBox.information(None, diagnostics.title, diagnostics.message)
+
+    def open_tailscale_admin(self) -> None:
+        ok = QDesktopServices.openUrl(QUrl(TAILSCALE_ADMIN_URL))
+        if not ok:
+            self.show_message(
+                "Open Tailscale Admin",
+                "Could not open the Tailscale Admin page. Check your default browser or URL handler.",
+                QSystemTrayIcon.MessageIcon.Warning,
+            )
 
     def show_message(
         self,

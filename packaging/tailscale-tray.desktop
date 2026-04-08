@@ -5,6 +5,6 @@ Comment=Small KDE tray helper for Tailscale
 Exec=/usr/bin/tailscale-tray
 Icon=network-vpn
 Terminal=false
-Categories=Network;Utility;
+Categories=Network;
 StartupNotify=false
 X-GNOME-UsesNotifications=true
