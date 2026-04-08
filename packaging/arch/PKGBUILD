@@ -1,0 +1,45 @@
+pkgname=tailscale-tray
+pkgver=1.0.0
+pkgrel=1
+pkgdesc='KDE-friendly Linux tray app for Tailscale'
+arch=('any')
+url='https://github.com/iamstevedavis/tailscale-tray'
+license=('MIT')
+depends=(
+  'python'
+  'python-pyside6'
+  'tailscale'
+  'hicolor-icon-theme'
+)
+optdepends=(
+  'xdg-utils: preferred xdg-open integration for opening the Tailscale admin page'
+)
+source=("${pkgname}-${pkgver}.tar.gz::https://github.com/iamstevedavis/tailscale-tray/archive/refs/tags/v${pkgver}.tar.gz")
+sha256sums=('f88e73b579d94ebc6dbfcd62bb1f7cdf6b769e859d58645b149c2bc63417dada')
+
+package() {
+  cd "${srcdir}/${pkgname}-${pkgver}"
+
+  install -Dm755 app.py "${pkgdir}/usr/share/${pkgname}/app.py"
+
+  for module in \
+    diagnostics_view.py \
+    tailscale_cli.py \
+    tailscale_command.py \
+    tailscale_status.py \
+    tray_controller.py \
+    tray_icon.py \
+    tray_view.py; do
+    install -Dm644 "$module" "${pkgdir}/usr/share/${pkgname}/$module"
+  done
+
+  install -Dm644 packaging/tailscale-tray.desktop \
+    "${pkgdir}/usr/share/applications/tailscale-tray.desktop"
+  install -Dm644 assets/tailscale-tray.svg \
+    "${pkgdir}/usr/share/icons/hicolor/scalable/apps/tailscale-tray.svg"
+
+  install -Dm755 /dev/stdin "${pkgdir}/usr/bin/tailscale-tray" <<'EOF'
+#!/usr/bin/env bash
+exec /usr/bin/python3 /usr/share/tailscale-tray/app.py "$@"
+EOF
+}

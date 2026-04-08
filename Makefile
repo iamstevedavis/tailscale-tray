@@ -2,7 +2,7 @@ APP_NAME := tailscale-tray
 VERSION ?= 0.1.0
 PYTHON ?= python3
 
-.PHONY: test build-binary build-rpm build-rpm-container clean
+.PHONY: test build-binary build-rpm build-rpm-container build-aur-artifact clean
 
 test:
 	$(PYTHON) -m py_compile \
@@ -24,5 +24,8 @@ build-rpm: build-binary
 build-rpm-container:
 	./scripts/build-rpm-container.sh $(VERSION)
 
+build-aur-artifact:
+	./scripts/build-aur-artifact.sh $(VERSION)
+
 clean:
-	rm -rf build dist pkgroot tailscale-tray.spec *.spec.tmp
+	rm -rf build dist pkgroot tailscale-tray.spec *.spec.tmp artifacts/PKGBUILD artifacts/.SRCINFO artifacts/*-aur.tar.gz
