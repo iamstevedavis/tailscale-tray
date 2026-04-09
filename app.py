@@ -24,6 +24,7 @@ MESSAGE_ICONS = {
 
 POLL_INTERVAL_MS = 10000
 TAILSCALE_ADMIN_URL = "https://login.tailscale.com/admin/machines"
+TAILSCALE_LOGIN_URL = "https://login.tailscale.com/login"
 
 
 class QtProcessRunner:
@@ -103,6 +104,9 @@ class TailscaleTray:
         self.copy_ip_action = QAction("Copy Tailnet IP", self.menu)
         self.copy_ip_action.triggered.connect(self.copy_tailnet_ip)
 
+        self.authenticate_action = QAction("Authenticate Tailscale SSH", self.menu)
+        self.authenticate_action.triggered.connect(self.authenticate_tailscale_ssh)
+
         self.open_admin_action = QAction("Open Tailscale Admin", self.menu)
         self.open_admin_action.triggered.connect(self.open_tailscale_admin)
 
@@ -119,6 +123,7 @@ class TailscaleTray:
         self.menu.addAction(self.connect_action)
         self.menu.addAction(self.disconnect_action)
         self.menu.addAction(self.copy_ip_action)
+        self.menu.addAction(self.authenticate_action)
         self.menu.addAction(self.open_admin_action)
         self.menu.addAction(self.show_diagnostics_action)
         self.menu.addSeparator()
@@ -172,7 +177,7 @@ class TailscaleTray:
         diagnostics = build_diagnostics_view(self.snapshot, self.resolve_tailscale_path())
         QMessageBox.information(None, diagnostics.title, diagnostics.message)
 
-    def open_tailscale_admin(self) -> None:
+    def open_url(self, title: str, url: str, failure_message: str) -> None:
         xdg_open = shutil.which("xdg-open")
         if xdg_open:
             clean_env = os.environ.copy()
@@ -188,7 +193,7 @@ class TailscaleTray:
                 clean_env.pop(key, None)
             try:
                 subprocess.Popen(
-                    [xdg_open, TAILSCALE_ADMIN_URL],
+                    [xdg_open, url],
                     env=clean_env,
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL,
@@ -198,17 +203,26 @@ class TailscaleTray:
             except OSError:
                 pass
 
-        ok = QDesktopServices.openUrl(QUrl(TAILSCALE_ADMIN_URL))
+        ok = QDesktopServices.openUrl(QUrl(url))
         if ok:
             return
 
-        message = "Could not open the Tailscale Admin page. Check your default browser or URL handler."
-        self.show_message(
-            "Open Tailscale Admin",
-            message,
-            QSystemTrayIcon.MessageIcon.Warning,
+        self.show_message(title, failure_message, QSystemTrayIcon.MessageIcon.Warning)
+        QMessageBox.warning(None, title, failure_message)
+
+    def authenticate_tailscale_ssh(self) -> None:
+        self.open_url(
+            "Authenticate Tailscale SSH",
+            TAILSCALE_LOGIN_URL,
+            "Could not open the Tailscale login page. Check your default browser or URL handler.",
         )
-        QMessageBox.warning(None, "Open Tailscale Admin", message)
+
+    def open_tailscale_admin(self) -> None:
+        self.open_url(
+            "Open Tailscale Admin",
+            TAILSCALE_ADMIN_URL,
+            "Could not open the Tailscale Admin page. Check your default browser or URL handler.",
+        )
 
     def show_message(
         self,
