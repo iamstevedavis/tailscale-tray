@@ -7,7 +7,7 @@ url='https://github.com/iamstevedavis/tailscale-tray'
 license=('MIT')
 depends=(
   'python'
-  'python-pyside6'
+  'pyside6'
   'tailscale'
   'hicolor-icon-theme'
 )
